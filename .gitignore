@@ -1,0 +1,42 @@
+# --- Python ---
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.Python
+
+# --- Virtuelle Umgebungen ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- VSCode Editor ---
+.vscode/
+
+# --- PyCharm Editor ---
+.idea/
+
+# --- MacOS spezifisch ---
+.DS_Store
+
+# --- Windows spezifisch ---
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- Output-Ordner ---
+output/*
+
+# --- Input-Daten (PDFs) ---
+input/*
+
+# --- Temporäre Excel-Dateien ---
+~$*.xlsm
+
+# --- Sonstige temporäre Dateien ---
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo

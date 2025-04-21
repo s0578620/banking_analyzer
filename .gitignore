@@ -26,8 +26,12 @@ ehthumbs.db
 desktop.ini
 
 # --- Output-Ordner ---
+logs/*
+
+# --- Output-Ordner ---
 output/parser_output/*
 output/processed/*
+
 # --- Input-Daten (PDFs) ---
 input/*
 

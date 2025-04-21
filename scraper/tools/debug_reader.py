@@ -1,11 +1,12 @@
-# scraper/debug_reader.py
+# scraper/tools/debug_reader.py
 import os
 import pdfplumber
+from scraper.utils.logger import setup_logger
 
-# === Einstellungen ===
-input_folder = "input/"
+logger = setup_logger(__name__)
 
-# === Debug-Funktion: Zeigt Rohtext aus PDFs ===
+input_folder = os.path.join(os.path.dirname(__file__), "..", "..", "input")
+
 def debug_zeige_rohtext(pdf_path, max_seiten=1):
     try:
         with pdfplumber.open(pdf_path) as pdf:
@@ -13,24 +14,20 @@ def debug_zeige_rohtext(pdf_path, max_seiten=1):
                 if i >= max_seiten:
                     break
                 text = seite.extract_text()
-                print(f"\n--- Seite {i+1} ---\n")
-                print(text[:1500])
-                print("\n--- Ende Seite ---\n")
+                logger.info(f"\n--- Seite {i+1} ---\n{text[:1500]}\n--- Ende Seite ---")
     except Exception as e:
-        print(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
-
+        logger.error(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
 
 def main():
-    print("\n=== DEBUG MODUS: Lese Rohtext aus PDFs ===\n")
+    logger.info("=== DEBUG MODUS: Lese Rohtext aus PDFs ===")
 
     for filename in os.listdir(input_folder):
         if filename.endswith(".pdf"):
             pdf_path = os.path.join(input_folder, filename)
-            print(f"📄 Datei: {filename}")
+            logger.info(f"📄 Datei: {filename}")
             debug_zeige_rohtext(pdf_path)
 
-    print("\n✅ Fertig. Jetzt können wir den Parser anpassen!")
-
+    logger.info("✅ Fertig. Jetzt können wir den Parser anpassen!")
 
 if __name__ == "__main__":
     main()

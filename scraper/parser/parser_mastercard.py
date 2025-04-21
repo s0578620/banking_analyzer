@@ -2,9 +2,11 @@
 import re
 import pandas as pd
 import pdfplumber
+from scraper.utils.logger import setup_logger
+logger = setup_logger(__name__)
 
 def parse_mastercard(pdf_path):
-    print(f"\n🔨 parse_mastercard() wird aufgerufen für {pdf_path}")
+    logger.info(f"\n🔨 parse_mastercard() wird aufgerufen für {pdf_path}")
 
     try:
         with pdfplumber.open(pdf_path) as pdf:
@@ -12,7 +14,7 @@ def parse_mastercard(pdf_path):
             for page in pdf.pages:
                 text += page.extract_text() + "\n"
     except Exception as e:
-        print(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
+        logger.warning(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
         return pd.DataFrame()
 
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -45,7 +47,6 @@ def parse_mastercard(pdf_path):
             if vorzeichen == "-":
                 betrag = -betrag
 
-            # Jahr dynamisch bestimmen
             parts = datum_buchung.rstrip('.').split('.')
             day = int(parts[0])
             month = int(parts[1])
@@ -71,5 +72,5 @@ def parse_mastercard(pdf_path):
     if current:
         buchungen.append(current)
 
-    print(f"✅ Insgesamt {len(buchungen)} Mastercard-Buchungen extrahiert!")
+    logger.info(f"✅ Insgesamt {len(buchungen)} Mastercard-Buchungen extrahiert!")
     return pd.DataFrame(buchungen)

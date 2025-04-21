@@ -1,20 +1,27 @@
-# scraper/processor.py
-
+# scraper/processor/processor.py
+import os
 import pandas as pd
 import json
-import os
-from utils import normalize_text
 import re
 import datetime
+from scraper.utils.utils import normalize_text
+from scraper.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+INPUT_FOLDER = os.path.join(BASE_DIR, "output", "parser_output")
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "output", "processed")
 
 
 def load_mapping():
-    mapping_path = os.path.join(os.path.dirname(__file__), "..", "mapping", "provider_mapping.json")
+    mapping_path = os.path.join(BASE_DIR, "mapping", "provider_mapping.json")
     if not os.path.exists(mapping_path):
         raise FileNotFoundError(f"Mapping-Datei nicht gefunden: {mapping_path}")
 
     with open(mapping_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def map_verwendungszweck(zeile, mapping):
     verwendungszweck = normalize_text(str(zeile))
@@ -72,7 +79,7 @@ def extract_entgelt_and_create_new_rows(df):
 
 
 def process_file(csv_path):
-    print(f"🔧 Verarbeite {csv_path}...")
+    logger.info(f"🔧 Verarbeite {csv_path}...")
     df = pd.read_csv(csv_path)
 
     mapping = load_mapping()
@@ -85,7 +92,8 @@ def process_file(csv_path):
 
     if 'Verwendungszweck' in df.columns:
         df.drop(columns=['Verwendungszweck'], inplace=True)
-    output_folder = os.path.join(os.path.dirname(__file__), "..", "output", "processed")
+    output_folder = OUTPUT_FOLDER
+
     os.makedirs(output_folder, exist_ok=True)
 
     original_filename = os.path.basename(csv_path)
@@ -97,11 +105,11 @@ def process_file(csv_path):
     output_path = os.path.join(output_folder, final_filename)
 
     df.to_csv(output_path, index=False)
-    print(f"✅ Datei gespeichert unter {output_path}")
+    logger.info(f"✅ Datei gespeichert unter {output_path}")
 
 
 if __name__ == "__main__":
-    input_folder = os.path.join(os.path.dirname(__file__), "..", "output", "parser_output")
-    for filename in os.listdir(input_folder):
+    for filename in os.listdir(INPUT_FOLDER):
         if filename.endswith(".csv"):
-            process_file(os.path.join(input_folder, filename))
+            process_file(os.path.join(INPUT_FOLDER, filename))
+

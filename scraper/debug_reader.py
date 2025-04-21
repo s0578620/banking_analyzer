@@ -14,7 +14,7 @@ def debug_zeige_rohtext(pdf_path, max_seiten=1):
                     break
                 text = seite.extract_text()
                 print(f"\n--- Seite {i+1} ---\n")
-                print(text[:1500])  # Nur die ersten 1500 Zeichen pro Seite zeigen
+                print(text[:1500])
                 print("\n--- Ende Seite ---\n")
     except Exception as e:
         print(f"❌ Fehler beim Lesen von {pdf_path}: {e}")

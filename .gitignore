@@ -26,12 +26,10 @@ ehthumbs.db
 desktop.ini
 
 # --- Output-Ordner ---
-output/*
-
+output/parser_output/*
+output/processed/*
 # --- Input-Daten (PDFs) ---
 input/*
-# --- Ressources-Daten (PDFs) ---
-ressources/*
 
 # --- Temporäre Excel-Dateien ---
 ~$*.xlsm

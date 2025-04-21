@@ -61,7 +61,6 @@ def parse_mastercard(pdf_path):
 
             current = {
                 "Datum": datum,
-                "Belegdatum": belegdatum,
                 "Verwendungszweck": verwendungszweck,
                 "Betrag": betrag
             }

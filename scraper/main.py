@@ -12,7 +12,7 @@ suppress_warnings()
 def main():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(BASE_DIR, "..", "input")
-    output_folder = os.path.join(BASE_DIR, "..", "output")
+    output_folder = os.path.join(BASE_DIR, "..", "output/parser_output")
 
     os.makedirs(input_folder, exist_ok=True)
     os.makedirs(output_folder, exist_ok=True)

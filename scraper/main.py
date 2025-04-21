@@ -1,11 +1,20 @@
 # scraper/main.py
+# scraper/main.py
+
+import sys
 import os
 import pandas as pd
-from parser_volksbank import parse_volksbank
-from parser_mastercard import parse_mastercard
-from utils import detect_bank_typ
-from suppress_warnings import suppress_warnings
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# Danach erst normale Imports:
+from scraper.parser.parser_mastercard import parse_mastercard
+from scraper.parser.parser_volksbank import parse_volksbank
+from scraper.utils.utils import detect_bank_typ
+from scraper.utils.logger import setup_logger
+from scraper.utils.suppress_warnings import suppress_warnings
+
+
+logger = setup_logger(__name__)
 suppress_warnings()
 
 
@@ -23,7 +32,7 @@ def main():
     for filename in os.listdir(input_folder):
         if filename.endswith(".pdf"):
             pdf_path = os.path.join(input_folder, filename)
-            print(f"\n📄 Verarbeite {filename}...")
+            logger.info(f"📄 Verarbeite {filename}...")
 
             bank_typ = detect_bank_typ(filename)
 
@@ -36,7 +45,7 @@ def main():
                 mastercard_buchungen.append(df_mc)
 
             else:
-                print(f"⚠️ Unbekannter Dateityp: {filename}")
+                logger.warning(f"⚠️ Unbekannter Dateityp: {filename}")
 
     # Speichern Volksbank
     if volksbank_buchungen:
@@ -46,7 +55,7 @@ def main():
         for jahr, group in df_vb.groupby(df_vb["Datum"].dt.year):
             output_path = os.path.join(output_folder, f"buchungen_volksbank_{jahr}.csv")
             group.to_csv(output_path, index=False)
-            print(f"✅ Volksbank-Buchungen für {jahr} gespeichert: {output_path}")
+            logger.info(f"✅ Volksbank-Buchungen für {jahr} gespeichert: {output_path}")
 
     # Speichern Mastercard
     if mastercard_buchungen:
@@ -56,7 +65,7 @@ def main():
         for jahr, group in df_mc.groupby(df_mc["Datum"].dt.year):
             output_path = os.path.join(output_folder, f"buchungen_mastercard_{jahr}.csv")
             group.to_csv(output_path, index=False)
-            print(f"✅ Mastercard-Buchungen für {jahr} gespeichert: {output_path}")
+            logger.info(f"✅ Mastercard-Buchungen für {jahr} gespeichert: {output_path}")
 
 if __name__ == "__main__":
     main()

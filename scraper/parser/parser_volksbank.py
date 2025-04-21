@@ -2,15 +2,18 @@
 import re
 import pandas as pd
 from pdfminer.high_level import extract_text
+from scraper.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 def parse_volksbank(pdf_path):
     buchungen = []
-    print(f"\n🔨 parse_volksbank() wird aufgerufen für {pdf_path}")
+    logger.info(f"\n🔨 parse_volksbank() wird aufgerufen für {pdf_path}")
 
     try:
         text = extract_text(pdf_path)
     except Exception as e:
-        print(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
+        logger.warning(f"❌ Fehler beim Lesen von {pdf_path}: {e}")
         return pd.DataFrame()
 
     lines = text.splitlines()
@@ -62,5 +65,5 @@ def parse_volksbank(pdf_path):
     if current_buchung:
         buchungen.append(current_buchung)
 
-    print(f"✅ {len(buchungen)} Buchungen erfolgreich extrahiert!")
+    logger.info(f"✅ {len(buchungen)} Buchungen erfolgreich extrahiert!")
     return pd.DataFrame(buchungen)

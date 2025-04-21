@@ -17,3 +17,10 @@ def extract_year_from_filename(filename):
         if 2000 <= jahr <= 2100:
             return jahr
     return None
+
+def map_company(verwendungszweck, mapping):
+    verwendungszweck = verwendungszweck.lower()
+    for anbieter, kategorie in mapping.items():
+        if anbieter.lower() in verwendungszweck:
+            return kategorie
+    return "Sonstiges"

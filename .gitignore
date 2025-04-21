@@ -30,6 +30,8 @@ output/*
 
 # --- Input-Daten (PDFs) ---
 input/*
+# --- Ressources-Daten (PDFs) ---
+ressources/*
 
 # --- Temporäre Excel-Dateien ---
 ~$*.xlsm

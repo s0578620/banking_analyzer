@@ -1,9 +1,9 @@
 # scraper/main.py
 import os
 import pandas as pd
-from scraper.parser_volksbank import parse_volksbank
-from scraper.parser_mastercard import parse_mastercard
-from scraper.utils import detect_bank_typ, extract_year_from_filename
+from parser_volksbank import parse_volksbank
+from parser_mastercard import parse_mastercard
+from utils import detect_bank_typ, extract_year_from_filename
 
 def main():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

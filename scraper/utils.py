@@ -1,5 +1,12 @@
 # scraper/utils.py
 import re
+import unicodedata
+
+def normalize_text(text):
+    text = str(text).lower()
+    text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
+    text = re.sub(r'[^a-z0-9\s]', '', text)
+    return text.strip()
 
 def detect_bank_typ(filename):
     name = filename.lower()

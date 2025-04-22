@@ -1,4 +1,3 @@
-# visualizer.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,40 +9,55 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FOLDER = os.path.join(BASE_DIR, "output", "processed")
 
-# === Load all available CSVs ===
+# === Load CSVs ===
 @st.cache_data
 def load_data(bank_type, year):
-    filename = f"{bank_type.lower()}_{year}_mapped_20250422.csv"  # adjust if date changes
+    filename = f"{bank_type.lower()}_{year}_mapped_20250422.csv"
     filepath = os.path.join(DATA_FOLDER, filename)
     if not os.path.exists(filepath):
-        st.error(f"CSV für {bank_type} {year} nicht gefunden!")
         return pd.DataFrame()
     df = pd.read_csv(filepath, parse_dates=["Datum"])
     df["Monat"] = df["Datum"].dt.to_period("M").astype(str)
     return df
 
 # === Sidebar ===
-st.sidebar.title("🔧 Einstellungen")
+st.sidebar.title("🔧 Mega-Visualizer Einstellungen")
 
-# Typ Auswahl
-bank_type = st.sidebar.selectbox(
-    "Kontotyp auswählen:",
-    ("volksbank", "mastercard")
+bank_types = st.sidebar.multiselect(
+    "Kontotyp(en) auswählen:",
+    ("volksbank", "mastercard"),
+    default=("volksbank", "mastercard")
 )
 
-# Jahr Auswahl
-year = st.sidebar.selectbox(
-    "Jahr auswählen:",
-    ("2024", "2025")
+available_years = ["2023", "2024", "2025"]
+selected_years = st.sidebar.multiselect(
+    "Jahre auswählen (für Vergleich):",
+    options=available_years,
+    default=available_years
 )
 
-# Lade CSV
-df = load_data(bank_type, year)
+st.sidebar.title("📈 Zusätzliche Visualisierungen")
+cashflow_banktyp_enabled = st.sidebar.checkbox("Cashflow nach Banktyp anzeigen", value=True)
+netto_saldo_enabled = st.sidebar.checkbox("Netto-Saldo Entwicklung anzeigen", value=True)
+kumuliertes_vermoegen_enabled = st.sidebar.checkbox("Kumuliertes Vermögen anzeigen", value=True)
 
-if df.empty:
+# === Daten laden ===
+all_dfs = []
+for bank_type in bank_types:
+    for year in selected_years:
+        df_temp = load_data(bank_type, year)
+        if not df_temp.empty:
+            df_temp["Jahr"] = year
+            df_temp["Banktyp"] = bank_type
+            all_dfs.append(df_temp)
+
+if not all_dfs:
+    st.error("❌ Keine Daten für die ausgewählten Jahre und Banktypen gefunden.")
     st.stop()
 
-# Kategorie Filter
+df = pd.concat(all_dfs, ignore_index=True)
+
+# === Filter Settings ===
 available_categories = sorted(df["Kategorie"].dropna().unique())
 selected_categories = st.sidebar.multiselect(
     "Kategorien filtern:",
@@ -51,27 +65,24 @@ selected_categories = st.sidebar.multiselect(
     default=available_categories
 )
 
-# Betrag Filter
 min_betrag = float(df["Betrag"].min())
 max_betrag = float(df["Betrag"].max())
 betrag_range = st.sidebar.slider(
     "Betragsbereich (€):",
     min_value=min_betrag,
     max_value=max_betrag,
-    value=(min_betrag, max_betrag),
+    value=(min_betrag, max_betrag)
 )
 
-# Datumsbereich Filter
 min_date = df["Datum"].min()
 max_date = df["Datum"].max()
 date_range = st.sidebar.date_input(
     "Zeitraum filtern:",
     (min_date, max_date),
     min_value=min_date,
-    max_value=max_date,
+    max_value=max_date
 )
 
-# Top N Anbieter
 top_n = st.sidebar.slider("Top N Anbieter (nach Betrag):", 3, 20, 10)
 
 # === Daten filtern ===
@@ -84,72 +95,30 @@ filtered_df = df[
 ]
 
 # === Hauptseite ===
-st.title(f"📊 Finanz-Übersicht {bank_type.capitalize()} {year}")
+st.title(f"📊 Mega-FinanzÜbersicht: {', '.join(bank_types)} ({', '.join(selected_years)})")
 
 # === 1. Monatlicher Cashflow Verlauf ===
 st.subheader("1. Monatlicher Cashflow Verlauf")
-monthly_sum = filtered_df.groupby("Monat")["Betrag"].sum()
 fig, ax = plt.subplots()
-monthly_sum.plot(kind="line", marker="o", ax=ax)
+for (banktyp, jahr), group in filtered_df.groupby(["Banktyp", "Jahr"]):
+    monthly_sum = group.groupby(group["Datum"].dt.month)["Betrag"].sum()
+    monthly_sum = monthly_sum.reindex(range(1, 13), fill_value=0)
+    label = f"{banktyp.capitalize()} {jahr}"
+    monthly_sum.plot(kind="line", marker="o", ax=ax, label=label)
+
 ax.set_ylabel("Saldo (€)")
 ax.set_xlabel("Monat")
+ax.set_xticks(range(1, 13))
+ax.set_xticklabels(["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"])
+ax.legend(title="Banktyp / Jahr")
 ax.grid(True)
 ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,} €"))
 st.pyplot(fig)
 
-# === 2. Top Anbieter ===
-st.subheader("2. Top Anbieter (nach Betrag)")
-top_providers = (
-    filtered_df.groupby("Provider")["Betrag"]
-    .sum()
-    .abs()
-    .sort_values(ascending=False)
-    .head(top_n)
-)
-fig2, ax2 = plt.subplots()
-top_providers.plot(kind="bar", ax=ax2)
-ax2.set_ylabel("Betrag (€)")
-ax2.set_xlabel("Anbieter")
-ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha="right")
-ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,} €"))
-
-# Werte über Balken schreiben
-for p in ax2.patches:
-    ax2.annotate(
-        f"{int(p.get_height()):,} €",
-        (p.get_x() + p.get_width() / 2., p.get_height()),
-        ha='center', va='bottom',
-        fontsize=8, rotation=0
-    )
-st.pyplot(fig2)
-
-# === 3. Einnahmen vs Ausgaben ===
-st.subheader("3. Einnahmen vs Ausgaben")
-
-einnahmen = filtered_df[filtered_df["Betrag"] > 0]["Betrag"].sum()
-ausgaben = -filtered_df[filtered_df["Betrag"] < 0]["Betrag"].sum()
-
-def pie_label(pct, allvals):
-    absolute = int(pct/100.*sum(allvals))
-    return f"{pct:.1f}%\n({absolute:,} €)"
-
-fig3, ax3 = plt.subplots()
-ax3.pie(
-    [einnahmen, ausgaben],
-    labels=["Einnahmen", "Ausgaben"],
-    autopct=lambda pct: pie_label(pct, [einnahmen, ausgaben]),
-    startangle=90,
-    colors=["#4CAF50", "#F44336"]
-)
-ax3.axis("equal")
-st.pyplot(fig3)
-
-# === 4. Heatmap: Ausgaben nach Wochentag und Monat ===
-st.subheader("4. Heatmap: Ausgaben nach Wochentag und Monat")
-
+# === 4. Heatmap ===
+st.subheader("4. Heatmap: Ausgaben pro Wochentag und Monat")
 filtered_df["Wochentag"] = filtered_df["Datum"].dt.day_name()
 filtered_df["Monat_Year"] = filtered_df["Datum"].dt.to_period("M").astype(str)
-
 pivot_table = filtered_df.pivot_table(
     index="Wochentag",
     columns="Monat_Year",
@@ -157,13 +126,9 @@ pivot_table = filtered_df.pivot_table(
     aggfunc="sum",
     fill_value=0
 )
-
-# Reihenfolge der Wochentage
 ordered_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 pivot_table = pivot_table.reindex(ordered_days)
-
-# Heatmap anzeigen
-fig4, ax4 = plt.subplots(figsize=(10, 5))
+fig4, ax4 = plt.subplots(figsize=(12, 6))
 sns.heatmap(
     pivot_table.applymap(lambda x: int(x)),
     annot=True,
@@ -179,6 +144,72 @@ ax4.set_ylabel("Wochentag")
 ax4.set_xlabel("Monat")
 st.pyplot(fig4)
 
-# === Footer ===
-st.caption("🔍 Tipp: Filter in der Sidebar anpassen für genauere Auswertungen!")
+# === 5. Cashflow pro Banktyp ===
+if cashflow_banktyp_enabled:
+    st.subheader("5. Monatlicher Cashflow (gestapelt nach Banktyp)")
+    monthly = filtered_df.groupby(["Monat", "Banktyp"])["Betrag"].sum().unstack(fill_value=0)
+    fig5, ax5 = plt.subplots(figsize=(12, 6))
+    monthly.plot(kind="bar", stacked=True, ax=ax5)
+    ax5.set_ylabel("Saldo (€)")
+    ax5.set_xlabel("Monat")
+    ax5.set_xticklabels(monthly.index, rotation=45, ha="right")
+    ax5.legend(title="Banktyp")
+    ax5.grid(True)
+    st.pyplot(fig5)
 
+# === 6. Netto-Saldo Entwicklung ===
+if netto_saldo_enabled:
+    st.subheader("6. Monatlicher Netto-Saldo (Einnahmen - Ausgaben)")
+    netto = filtered_df.groupby(filtered_df["Datum"].dt.to_period("M"))["Betrag"].sum()
+    netto.index = netto.index.astype(str)
+    fig6, ax6 = plt.subplots(figsize=(12, 4))
+    netto.plot(kind="bar", color="skyblue", ax=ax6)
+    ax6.set_ylabel("Netto-Saldo (€)")
+    ax6.set_xlabel("Monat")
+    ax6.axhline(0, color='black', lw=1)
+    st.pyplot(fig6)
+
+# === 7. Kumuliertes Vermögen ===
+if kumuliertes_vermoegen_enabled:
+    st.subheader("7. Kumuliertes Vermögen im Zeitverlauf")
+    kumuliert = filtered_df.sort_values("Datum").set_index("Datum")["Betrag"].cumsum()
+    fig7, ax7 = plt.subplots(figsize=(12, 4))
+    kumuliert.plot(ax=ax7)
+    ax7.set_ylabel("Kumuliertes Vermögen (€)")
+    ax7.set_xlabel("Datum")
+    ax7.grid(True)
+    st.pyplot(fig7)
+
+# === 5. Gesamtstatistik: Ausgaben pro Jahr & Provider ===
+
+# Checkbox steuern
+if st.sidebar.checkbox("Gesamtstatistik (Summe pro Provider & Jahr) anzeigen", value=True):
+    st.subheader("5. Gesamtstatistik: Ausgaben pro Jahr & Provider")
+
+    # Aggregieren
+    provider_stats = (
+        filtered_df.groupby(["Provider", "Jahr"])["Betrag"]
+        .sum()
+        .unstack(fill_value=0)
+    )
+
+    # Tabelle anzeigen
+    st.dataframe(provider_stats.style.format("{:,.2f} €"))
+
+    # Gesamtzeile hinzufügen (optional, falls gewünscht)
+    provider_stats.loc["Gesamt"] = provider_stats.sum()
+
+    # Balkendiagramm
+    fig5, ax5 = plt.subplots(figsize=(12, 6))
+    provider_stats.drop("Gesamt", errors="ignore").plot(kind="bar", stacked=True, ax=ax5)
+    ax5.set_ylabel("Summe Betrag (€)")
+    ax5.set_xlabel("Provider")
+    ax5.set_title("Summe der Ausgaben pro Jahr und Provider")
+    ax5.legend(title="Jahr")
+    ax5.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,} €"))
+    ax5.set_xticklabels(ax5.get_xticklabels(), rotation=45, ha="right")
+    st.pyplot(fig5)
+
+
+# === Footer ===
+st.caption("🔍 Tipp: Aktiviere oder deaktiviere Plots je nach Analysebedarf!")

@@ -1,3 +1,5 @@
+![Python Tests](https://github.com/s0578620/banking_analyzer/actions/workflows/python-tests.yml/badge.svg)
+
 # 🏦 Bank Data Scraper
 
 
@@ -111,4 +113,8 @@ Clean output folders (parser_output/ and processed/):
 # Development Utilities
 ```bash
   pip freeze > requirements.txt
+```
+Tests + Coverage in Terminal
+```bash
+python -m pytest --cov=scraper --cov-report=term-missing
 ```

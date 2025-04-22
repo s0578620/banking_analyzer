@@ -3,24 +3,28 @@
 import sys
 import os
 import pandas as pd
+
+# Append Projekt-Wurzelverzeichnis
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Danach erst normale Imports:
+# Danach normale Imports
 from scraper.parser.parser_mastercard import parse_mastercard
 from scraper.parser.parser_volksbank import parse_volksbank
 from scraper.utils.utils import detect_bank_typ
 from scraper.utils.logger import setup_logger
 from scraper.utils.suppress_warnings import suppress_warnings
 
-
+# Setup
 logger = setup_logger(__name__)
 suppress_warnings()
 
-
-def main():
+def main(input_folder=None, output_folder=None):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    input_folder = os.path.join(BASE_DIR, "..", "input")
-    output_folder = os.path.join(BASE_DIR, "..", "output/parser_output")
+
+    if input_folder is None:
+        input_folder = os.path.join(BASE_DIR, "..", "input")
+    if output_folder is None:
+        output_folder = os.path.join(BASE_DIR, "..", "output/parser_output")
 
     os.makedirs(input_folder, exist_ok=True)
     os.makedirs(output_folder, exist_ok=True)
@@ -28,6 +32,7 @@ def main():
     volksbank_buchungen = []
     mastercard_buchungen = []
 
+    # Alle PDFs verarbeiten
     for filename in os.listdir(input_folder):
         if filename.endswith(".pdf"):
             pdf_path = os.path.join(input_folder, filename)
@@ -46,25 +51,22 @@ def main():
             else:
                 logger.warning(f"⚠️ Unbekannter Dateityp: {filename}")
 
-    # Speichern Volksbank
-    if volksbank_buchungen:
-        df_vb = pd.concat(volksbank_buchungen, ignore_index=True)
-        df_vb = df_vb.dropna(subset=["Datum"])
+    # ➔ Funktion zum Speichern
+    def save_bookings(df_list, bank_name):
+        if df_list:
+            df = pd.concat(df_list, ignore_index=True)
+            if "Datum" in df.columns:
+                df["Datum"] = pd.to_datetime(df["Datum"], errors="coerce")
+                df = df.dropna(subset=["Datum"])
+                if not df.empty:
+                    for jahr, group in df.groupby(df["Datum"].dt.year):
+                        output_path = os.path.join(output_folder, f"buchungen_{bank_name}_{jahr}.csv")
+                        group.to_csv(output_path, index=False)
+                        logger.info(f"✅ {bank_name.capitalize()}-Buchungen für {jahr} gespeichert: {output_path}")
 
-        for jahr, group in df_vb.groupby(df_vb["Datum"].dt.year):
-            output_path = os.path.join(output_folder, f"buchungen_volksbank_{jahr}.csv")
-            group.to_csv(output_path, index=False)
-            logger.info(f"✅ Volksbank-Buchungen für {jahr} gespeichert: {output_path}")
-
-    # Speichern Mastercard
-    if mastercard_buchungen:
-        df_mc = pd.concat(mastercard_buchungen, ignore_index=True)
-        df_mc = df_mc.dropna(subset=["Datum"])
-
-        for jahr, group in df_mc.groupby(df_mc["Datum"].dt.year):
-            output_path = os.path.join(output_folder, f"buchungen_mastercard_{jahr}.csv")
-            group.to_csv(output_path, index=False)
-            logger.info(f"✅ Mastercard-Buchungen für {jahr} gespeichert: {output_path}")
+    # ➔ Speichern für beide Banktypen
+    save_bookings(volksbank_buchungen, "volksbank")
+    save_bookings(mastercard_buchungen, "mastercard")
 
 if __name__ == "__main__":
     main()

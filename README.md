@@ -1,3 +1,4 @@
+![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)
 ![Python Tests](https://github.com/s0578620/banking_analyzer/actions/workflows/python-tests.yml/badge.svg)
 
 # 🏦 Bank Data Scraper
@@ -59,7 +60,6 @@ bankdaten_scraper/
 
 ```
 # ⚙️ Setup
-![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)
 1. Create a virtual environmen
 ```bash
   python -m venv .venv

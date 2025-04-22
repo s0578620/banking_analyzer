@@ -1,3 +1,5 @@
+![Python Tests](https://github.com/s0578620/banking_analyzer/actions/workflows/python-tests.yml/badge.svg)
+
 # 🏦 Bank Data Scraper
 
 

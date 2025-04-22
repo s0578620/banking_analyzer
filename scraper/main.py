@@ -18,11 +18,13 @@ from scraper.utils.suppress_warnings import suppress_warnings
 logger = setup_logger(__name__)
 suppress_warnings()
 
-def main(input_folder=None):
+def main(input_folder=None, output_folder=None):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
     if input_folder is None:
         input_folder = os.path.join(BASE_DIR, "..", "input")
-    output_folder = os.path.join(BASE_DIR, "..", "output", "parser_output")
+    if output_folder is None:
+        output_folder = os.path.join(BASE_DIR, "..", "output/parser_output")
 
     os.makedirs(input_folder, exist_ok=True)
     os.makedirs(output_folder, exist_ok=True)

@@ -4,6 +4,7 @@ import pandas as pd
 from pdfminer.high_level import extract_text
 from scraper.utils.utils import extract_jahr_from_filename
 from scraper.utils.logger import setup_logger
+from scraper.utils.utils import create_empty_transaction_dataframe
 
 logger = setup_logger(__name__)
 
@@ -62,4 +63,9 @@ def parse_volksbank(pdf_path):
         buchungen.append(current_buchung)
 
     logger.info(f"✅ {len(buchungen)} Buchungen erfolgreich extrahiert!")
+
+    if not buchungen:
+        return create_empty_transaction_dataframe()
     return pd.DataFrame(buchungen)
+
+

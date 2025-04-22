@@ -112,3 +112,7 @@ Clean output folders (parser_output/ and processed/):
 ```bash
   pip freeze > requirements.txt
 ```
+Tests + Coverage in Terminal
+```bash
+python -m pytest --cov=scraper --cov-report=term-missing
+```

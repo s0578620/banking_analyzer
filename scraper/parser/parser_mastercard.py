@@ -4,6 +4,7 @@ import pandas as pd
 import pdfplumber
 from scraper.utils.utils import extract_jahr_from_filename
 from scraper.utils.logger import setup_logger
+from scraper.utils.utils import create_empty_transaction_dataframe
 
 logger = setup_logger(__name__)
 
@@ -75,4 +76,7 @@ def parse_mastercard(pdf_path):
         buchungen.append(current)
 
     logger.info(f"✅ Insgesamt {len(buchungen)} Mastercard-Buchungen extrahiert!")
+    if not buchungen:
+        return create_empty_transaction_dataframe()
     return pd.DataFrame(buchungen)
+

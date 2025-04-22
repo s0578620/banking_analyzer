@@ -35,3 +35,7 @@ def map_company(verwendungszweck, mapping):
         if normalize_text(anbieter) in verwendungszweck:
             return kategorie
     return "Sonstiges"
+
+def create_empty_transaction_dataframe():
+    return pd.DataFrame(columns=["Datum", "Betrag", "Verwendungszweck", "Provider", "Kategorie"])
+

@@ -1,4 +1,4 @@
-# scraper/utils.py
+# scraper/utils/utils.py
 
 import re
 import unicodedata

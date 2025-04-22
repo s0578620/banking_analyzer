@@ -1,4 +1,4 @@
-# scraper/suppress_warnings.py
+# scraper/utils/suppress_warnings.py
 import warnings
 import logging
 

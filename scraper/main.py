@@ -1,5 +1,4 @@
 # scraper/main.py
-# scraper/main.py
 
 import sys
 import os

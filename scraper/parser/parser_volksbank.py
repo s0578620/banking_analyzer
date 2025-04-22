@@ -1,7 +1,7 @@
-# scraper/parser_volksbank.py
 import re
 import pandas as pd
 from pdfminer.high_level import extract_text
+from scraper.utils.utils import extract_jahr_from_filename
 from scraper.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -18,6 +18,9 @@ def parse_volksbank(pdf_path):
 
     lines = text.splitlines()
     current_buchung = None
+
+    # ➡️ Jahr direkt aus Dateinamen auslesen:
+    jahr_from_filename = extract_jahr_from_filename(pdf_path)
 
     for line in lines:
         line = line.strip()
@@ -39,19 +42,11 @@ def parse_volksbank(pdf_path):
             if soll_haben == 'S':
                 betrag = -betrag
 
-            # 📅 Datum reparieren und Jahr bestimmen:
-            parts = datum_raw.rstrip('.').split('.')
-            day = int(parts[0])
-            month = int(parts[1])
-
-            if month == 12:
-                jahr = 2024
-            elif month == 1:
-                jahr = 2025
-            else:
-                jahr = 2024
-
-            datum = pd.to_datetime(f"{day}.{month}.{jahr}", format="%d.%m.%Y", errors="coerce")
+            # 📅 Datum verarbeiten:
+            try:
+                datum = pd.to_datetime(f"{datum_raw}{jahr_from_filename}", format="%d.%m.%Y", errors="coerce")
+            except Exception:
+                datum = pd.NaT
 
             current_buchung = {
                 "Datum": datum,

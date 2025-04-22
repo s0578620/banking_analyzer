@@ -74,6 +74,10 @@ Auto-Process
 ```bash
   python launcher.py
 ```
+Visualizer
+```bash
+  streamlit run visualizer.py
+```
 # Developer Tools
 Debug: Read raw text from PDFs (for parser development)
 ```bash

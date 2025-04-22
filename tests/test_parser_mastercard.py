@@ -1,4 +1,4 @@
-import pytest
+
 from scraper.parser import parser_mastercard
 
 def test_parse_mastercard_returns_dataframe(monkeypatch):

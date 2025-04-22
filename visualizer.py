@@ -29,7 +29,7 @@ bank_types = st.sidebar.multiselect(
     default=("volksbank", "mastercard")
 )
 
-available_years = ["2023", "2024", "2025"]
+available_years = ["2022","2023", "2024", "2025"]
 selected_years = st.sidebar.multiselect(
     "Jahre auswählen (für Vergleich):",
     options=available_years,
